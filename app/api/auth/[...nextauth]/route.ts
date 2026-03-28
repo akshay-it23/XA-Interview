@@ -1,16 +1,28 @@
 import NextAuth, { AuthOptions } from "next-auth";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";    // ← NEW
+import GitHubProvider from "next-auth/providers/github";    // ← NEW
 import clientPromise from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
 
 export const authOptions: AuthOptions = {
-  // Use MongoDB to persist users, accounts, & sessions
   adapter: MongoDBAdapter(clientPromise) as any,
 
-  // Configure authentication providers
   providers: [
-    // --- Email & Password Provider ---
+    // --- Google OAuth Provider ---
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+
+    // --- GitHub OAuth Provider ---
+    GitHubProvider({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+
+    // --- Email & Password Provider (from Day 4) ---
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -22,24 +34,20 @@ export const authOptions: AuthOptions = {
           throw new Error("Email and password are required");
         }
 
-        // Connect to MongoDB and find the user
         const client = await clientPromise;
         const db = client.db();
         const user = await db.collection("users").findOne({
           email: credentials.email,
         });
 
-        // If user doesn't exist, throw error
         if (!user) {
           throw new Error("No user found with this email");
         }
 
-        // If user exists but has no password (signed up via OAuth), throw error
         if (!user.hashedPassword) {
           throw new Error("Please sign in with Google or GitHub instead");
         }
 
-        // Compare the provided password with the stored hash
         const isPasswordValid = await bcrypt.compare(
           credentials.password,
           user.hashedPassword
@@ -49,7 +57,6 @@ export const authOptions: AuthOptions = {
           throw new Error("Invalid password");
         }
 
-        // Return the user object (NextAuth will create a session)
         return {
           id: user._id.toString(),
           email: user.email,
@@ -59,35 +66,34 @@ export const authOptions: AuthOptions = {
     }),
   ],
 
-  // Session configuration
   session: {
-    strategy: "jwt", // Use JWT for serverless compatibility
+    strategy: "jwt",
   },
 
-  // Customize the JWT and Session callbacks
   callbacks: {
-    async jwt({ token, user }) {
-      // When the user first signs in, add their ID to the token
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
+      }
+      // Store the provider used (useful for the bridge logic later)
+      if (account) {
+        token.provider = account.provider;
       }
       return token;
     },
     async session({ session, token }) {
-      // Make the user ID available in the session object
       if (session.user) {
         (session.user as any).id = token.id;
+        (session.user as any).provider = token.provider;
       }
       return session;
     },
   },
 
-  // Custom pages (we'll build these later)
   pages: {
     signIn: "/auth/signin",
   },
 
-  // Enable debug messages in development
   debug: process.env.NODE_ENV === "development",
 };
 
