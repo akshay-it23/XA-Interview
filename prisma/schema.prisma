@@ -12,6 +12,13 @@ model User {
   authUserId String   @unique // THIS IS THE BRIDGE: The MongoDB User ID goes here!
   email      String   @unique
   name       String?
+  
+  // --- CORE LOGIC: Fields For Onboarding ---
+  industry   String?  // Example: Tech, Finance
+  experience Int?     // Number of years (Int = Integer/Number)
+  bio        String?  // A short professional summary
+  skills     String[] // A dynamic list of skills like ["React", "Python"]
+  
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

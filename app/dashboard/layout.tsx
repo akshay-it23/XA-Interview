@@ -7,18 +7,20 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Trigger bridge if not cached
   const user = await checkUser();
 
-  // Redirect if user check failed
+  // 1. If not logged in at all, go to Sign-In
   if (!user) {
     redirect("/auth/signin");
   }
 
+  // 2. CORE LOGIC: If logged in but NO industry set, go to Onboarding
+  if (!user.industry) {
+    redirect("/onboarding");
+  }
+
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50/30">
-      <Navbar />
-      
+    <div className="flex min-h-screen w-full flex-col bg-slate-50/50">
       <main className="container mx-auto flex-1 p-4 sm:p-6 lg:p-8">
         {children}
       </main>

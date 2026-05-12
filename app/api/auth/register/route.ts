@@ -24,20 +24,23 @@ export async function POST(request: Request) {
     // --- Check if user already exists ---
     const client = await clientPromise;
     const db = client.db();
+    console.log("📝 Registering user in DB:", db.databaseName);
+    
     const existingUser = await db.collection("users").findOne({ email });
 
     if (existingUser) {
+      console.log("⚠️ User already exists:", email);
       return NextResponse.json(
         { error: "An account with this email already exists" },
         { status: 409 } // 409 Conflict
       );
     }
-
     // --- Hash the password ---
     const salt = await bcrypt.genSalt(12);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // --- Create the user ---
+    console.log("🔨 Creating user record...");
     const result = await db.collection("users").insertOne({
       name: name || null,
       email,
@@ -57,8 +60,10 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Registration error:", error);
+    // Returning the actual error message to help the user debug locally
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: `Server Error: ${errorMessage}` },
       { status: 500 }
     );
   }
