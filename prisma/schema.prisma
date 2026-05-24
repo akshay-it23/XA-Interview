@@ -30,7 +30,46 @@ model Resume {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String   @default("My Resume")
-  content   String?  // JSON or text data
+  
+  firstName String?
+  lastName  String?
+  email     String?
+  phone     String?
+  linkedin  String?
+  summary   String?
+
+  experiences Experience[]
+  educations  Education[]
+  skills      Skill[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Experience {
+  id          String   @id @default(uuid())
+  resumeId    String
+  resume      Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  jobTitle    String
+  company     String
+  startDate   String?
+  endDate     String?
+  description String?
+}
+
+model Education {
+  id           String   @id @default(uuid())
+  resumeId     String
+  resume       Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  degree       String
+  institution  String
+  startDate    String?
+  endDate      String?
+}
+
+model Skill {
+  id       String   @id @default(uuid())
+  resumeId String
+  resume   Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  name     String
 }

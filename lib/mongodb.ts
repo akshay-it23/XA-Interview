@@ -5,6 +5,7 @@ if (!process.env.MONGODB_URI) {
 }
 
 const uri = process.env.MONGODB_URI;
+console.log("🔌 Connecting to MongoDB with URI starting with:", uri.substring(0, 20) + "...");
 const options: MongoClientOptions = {};
 
 let client: MongoClient;

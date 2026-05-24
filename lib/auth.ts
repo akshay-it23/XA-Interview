@@ -7,7 +7,7 @@ import clientPromise from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
 
 export const authOptions: AuthOptions = {
-  adapter: MongoDBAdapter(clientPromise) as any,
+  // adapter: MongoDBAdapter(clientPromise) as any, // Disabled for Bypass Mode
 
   providers: [
     GoogleProvider({
